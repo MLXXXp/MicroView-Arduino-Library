@@ -142,7 +142,7 @@ typedef enum CMD {
 
 class MicroView : public Print{
 public:
-	MicroView(void) {};
+	MicroView(void);
 	void begin(void);
 	void end(void);
 
@@ -192,6 +192,8 @@ public:
 	uint8_t getLCDHeight(void);
 	void setColor(uint8_t color);
 	void setDrawMode(uint8_t mode);
+	void setScreenBuffer(void);
+	void setScreenBuffer(uint8_t *buffer);
 	uint8_t *getScreenBuffer(void);
 
 	// Font functions
@@ -217,6 +219,7 @@ public:
 	void doCmd(uint8_t index);
 
 private:
+	uint8_t *screenBuffer;
 	uint8_t foreColor,drawMode,fontWidth, fontHeight, fontType, fontStartChar, fontTotalChar, cursorX, cursorY;
 	uint16_t fontMapWidth;
 	//unsigned char *fontsPointer[TOTALFONTS];

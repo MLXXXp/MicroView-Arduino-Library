@@ -113,11 +113,20 @@ static uint8_t screenmemory [] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+/** \brief Constructor for the MicroView class. */
+MicroView::MicroView() {
+	// Use the reserved screen buffer by default
+	screenBuffer = screenmemory;
+}
+
 /** \brief Initialisation of MicroView Library.
 
-	Setup IO pins for SPI port then send initialisation commands to the SSD1306 controller inside the OLED.
+	Set up IO pins for SPI port then send initialisation commands to the SSD1306 controller inside the OLED.
 */
 void MicroView::begin() {
+	// Switch back to the default screen buffer if it was changed
+	screenBuffer = screenmemory;
+
 	// default 5x7 font
 	setFontType(0);
 	setColor(WHITE);
@@ -276,7 +285,7 @@ void MicroView::clear(uint8_t mode) {
 	}
 	else
 	{
-		memset(screenmemory, 0, LCDWIDTH * LCDPAGES);
+		memset(screenBuffer, 0, LCDWIDTH * LCDPAGES);
 		//display();
 	}
 }
@@ -304,7 +313,7 @@ void MicroView::clear(uint8_t mode, uint8_t c) {
 	}
 	else
 	{
-		memset(screenmemory, c, LCDWIDTH * LCDPAGES);
+		memset(screenBuffer, c, LCDWIDTH * LCDPAGES);
 		display();
 	}
 }
@@ -341,10 +350,10 @@ void MicroView::display(void) {
 
 	MVSPI.packetBegin();
 	DCHIGH;
-	MVSPI.transfer(screenmemory[0]);
+	MVSPI.transfer(screenBuffer[0]);
 	for (int i = 1; i < LCDWIDTH * LCDPAGES; i++) {
 		MVSPI.wait();
-		MVSPI.transfer(screenmemory[i]);
+		MVSPI.transfer(screenBuffer[i]);
 	}
 	MVSPI.packetEnd();
 
@@ -406,13 +415,13 @@ void MicroView::pixel(uint8_t x, uint8_t y, uint8_t color, uint8_t mode) {
 
 	if (mode==XOR) {
 		if (color==WHITE)
-		screenmemory[x+ (y/8)*LCDWIDTH] ^= _BV((y%8));
+			screenBuffer[x+ (y/8)*LCDWIDTH] ^= _BV((y%8));
 	}
 	else {
 		if (color==WHITE)
-		screenmemory[x+ (y/8)*LCDWIDTH] |= _BV((y%8));
+			screenBuffer[x+ (y/8)*LCDWIDTH] |= _BV((y%8));
 		else
-		screenmemory[x+ (y/8)*LCDWIDTH] &= ~_BV((y%8));
+			screenBuffer[x+ (y/8)*LCDWIDTH] &= ~_BV((y%8));
 	}
 
 	//display();
@@ -823,7 +832,7 @@ void  MicroView::drawChar(uint8_t x, uint8_t y, uint8_t c, uint8_t color, uint8_
 	// only 1 row to draw for font with 8 bit height
 	if (rowsToDraw==1) {
 		for (i=0; i<fontWidth; i++ ) {
-			screenmemory[temp + (line*LCDWIDTH) ] = pgm_read_byte(fontsPointer[fontType]+FONTHEADERSIZE+(c*fontWidth)+i);
+			screenBuffer[temp + (line*LCDWIDTH) ] = pgm_read_byte(fontsPointer[fontType]+FONTHEADERSIZE+(c*fontWidth)+i);
 			temp++;
 		}
 		return;
@@ -840,7 +849,7 @@ void  MicroView::drawChar(uint8_t x, uint8_t y, uint8_t c, uint8_t color, uint8_
 	temp=x;
 	for (row=0; row<rowsToDraw; row++) {
 		for (i=0; i<fontWidth; i++ ) {
-			screenmemory[temp + (( (line*(fontHeight/8)) +row)*LCDWIDTH) ] = pgm_read_byte(fontsPointer[fontType]+FONTHEADERSIZE+(charBitmapStartPosition+i+(row*fontMapWidth)));
+			screenBuffer[temp + (( (line*(fontHeight/8)) +row)*LCDWIDTH) ] = pgm_read_byte(fontsPointer[fontType]+FONTHEADERSIZE+(charBitmapStartPosition+i+(row*fontMapWidth)));
 			temp++;
 		}
 		temp=x;
@@ -909,12 +918,28 @@ void MicroView::flipHorizontal(boolean flip) {
 	}
 }
 
+/** \brief Set the screen buffer pointer to the default reserved buffer.
+
+	Set the RAM screen buffer pointer, used for drawing and display operations, to the default reserved buffer.
+*/
+void MicroView::setScreenBuffer(void) {
+	screenBuffer = screenmemory;
+}
+
+/** \brief Set the screen buffer pointer as specified.
+
+	Set the RAM screen buffer pointer used for drawing and display operations.
+*/
+void MicroView::setScreenBuffer(uint8_t *buffer) {
+	screenBuffer = buffer;
+}
+
 /** \brief Get pointer to screen buffer
 
-	Return a pointer to the start of the RAM screen buffer for direct access.
+	Return a pointer to the start of the current RAM screen buffer, for direct access.
 */
 uint8_t *MicroView::getScreenBuffer(void) {
-	return screenmemory;
+	return screenBuffer;
 }
 
 /** \brief Parse command.

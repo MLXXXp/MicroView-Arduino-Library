@@ -52,6 +52,7 @@ flipHorizontal	KEYWORD2
 setColumnAddress	KEYWORD2
 setPageAddress	KEYWORD2
 data	KEYWORD2
+setScreenBuffer	KEYWORD2
 getScreenBuffer	KEYWORD2
 
 getX	KEYWORD2
